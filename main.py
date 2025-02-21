@@ -5,16 +5,11 @@ import yaml
 from fastapi import FastAPI
 import uvicorn
 
-
-from thinking_neuron import ThinkerConfig, ThinkingNeuronServer
-
-
-CONFIG_PATH = os.environ.get("NODE_CONFIG_PATH", "config.yaml")
-config = ThinkerConfig(**yaml.safe_load(open(CONFIG_PATH, "r")))
+from thinking_neuron.thinking_server import ThinkingNeuronServer
 
 app = FastAPI()
 
-speech_neuron = ThinkingNeuronServer(config)
+speech_neuron = ThinkingNeuronServer()
 app.include_router(speech_neuron.router)
 
 if __name__ == "__main__":

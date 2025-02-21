@@ -14,21 +14,27 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_ollama.llms import OllamaLLM
 from typing import AsyncGenerator
 
-
-from .response import ThinkingResponse
-from .config import ThinkerConfig
-
-
-class ThinkRequest(BaseModel):
-    text: str
+from .models import (
+    ModelSettings,
+    UpdateConfigRequest,
+    UpdateConfigResponse,
+    ThinkingRequest,
+    ThinkingResponse,
+)
 
 
 class ThinkingNeuronServer:
 
-    def __init__(self, config: ThinkerConfig) -> None:
-        self.config = config
+    def __init__(self, config: UpdateConfigRequest = None) -> None:
+        if config:
+            self.config = config
+        else:
+            self.config = UpdateConfigRequest()
+
         self.router = APIRouter()
-        self.model = OllamaLLM(**self.config.model_settings.model_dump())
+        self.model = OllamaLLM(
+            **self.config.model_settings.model_dump(),
+        )
 
         self.router.add_api_route(
             "/think",
@@ -37,8 +43,13 @@ class ThinkingNeuronServer:
             response_class=StreamingResponse,
         )
 
+    async def update_settings(
+        self, request: UpdateConfigRequest
+    ) -> UpdateConfigResponse:
+        pass
+
     async def generate_response(
-        self, request: ThinkRequest
+        self, request: ThinkingRequest
     ) -> AsyncGenerator[str, None]:
         """Streams the response from the model"""
         template = """{question}"""
@@ -48,7 +59,7 @@ class ThinkingNeuronServer:
         async for chunk in chain.astream({"question": request.text}):
             yield chunk  # Send each chunk of response as it arrives
 
-    async def think(self, request: ThinkRequest) -> StreamingResponse:
+    async def think(self, request: ThinkingRequest) -> StreamingResponse:
         return StreamingResponse(
             self.generate_response(request), media_type="text/plain"
         )
