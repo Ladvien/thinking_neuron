@@ -6,9 +6,13 @@ class ModelSettings(BaseModel):
     model: str = Field(default="deepseek-r1:14b")
 
 
-class UpdateConfigRequest(BaseModel):
+class ThinkingServerConfig(BaseModel):
     name: str = Field(default="deep_thought")
     model_settings: ModelSettings = ModelSettings()
+
+
+class ServerConfigRequest(ThinkingServerConfig):
+    pass
 
 
 class UpdateConfigResponse(BaseModel):

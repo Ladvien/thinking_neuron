@@ -3,7 +3,7 @@ from typing import Any, Union
 from fastapi import FastAPI, APIRouter
 from langchain_ollama import ChatOllama
 import yaml
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from uuid import uuid4
 import os
 import requests
@@ -16,7 +16,8 @@ from typing import AsyncGenerator
 
 from .models import (
     ModelSettings,
-    UpdateConfigRequest,
+    ThinkingServerConfig,
+    ServerConfigRequest,
     UpdateConfigResponse,
     ThinkingRequest,
     ThinkingResponse,
@@ -25,11 +26,11 @@ from .models import (
 
 class ThinkingNeuronServer:
 
-    def __init__(self, config: UpdateConfigRequest = None) -> None:
+    def __init__(self, config: ThinkingServerConfig = None) -> None:
         if config:
             self.config = config
         else:
-            self.config = UpdateConfigRequest()
+            self.config = ThinkingServerConfig()
 
         self.router = APIRouter()
         self.model = OllamaLLM(
@@ -43,10 +44,20 @@ class ThinkingNeuronServer:
             response_class=StreamingResponse,
         )
 
+        self.router.add_api_route(
+            "/update_settings",
+            self.update_settings,
+            methods=["POST"],
+            response_class=StreamingResponse,
+        )
+
     async def update_settings(
-        self, request: UpdateConfigRequest
+        self, request: ServerConfigRequest
     ) -> UpdateConfigResponse:
-        pass
+        data = UpdateConfigResponse(
+            model=request.model_settings.model,
+        )
+        return JSONResponse(**data.model_dump())
 
     async def generate_response(
         self, request: ThinkingRequest

@@ -1,2 +1,2 @@
-from .models import UpdateConfigRequest
+from .models import ThinkingServerConfig
 from .thinking_server import ThinkingNeuronServer
