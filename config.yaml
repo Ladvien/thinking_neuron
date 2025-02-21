@@ -1,5 +1,5 @@
 name: thinking_neuron
 
 # LangChain Ollama settings
-model_config:
+model_settings:
   model: deepseek-r1:14b

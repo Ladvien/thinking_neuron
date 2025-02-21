@@ -1,13 +1,11 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
+from pydantic import BaseModel
 
 
-@dataclass
-class ModelConfig:
+class ModelSettings(BaseModel):
     model: str
 
 
-@dataclass
-class ThinkerConfig:
-
+class ThinkerConfig(BaseModel):
     name: str
-    model_config: ModelConfig
+    model_settings: ModelSettings

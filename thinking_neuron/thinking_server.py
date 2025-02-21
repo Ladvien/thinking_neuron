@@ -12,6 +12,8 @@ import re
 from pydantic import BaseModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_ollama.llms import OllamaLLM
+from typing import AsyncGenerator
+
 
 from .response import ThinkingResponse
 from .config import ThinkerConfig
@@ -21,18 +23,12 @@ class ThinkRequest(BaseModel):
     text: str
 
 
-from fastapi.responses import StreamingResponse
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_ollama.llms import OllamaLLM
-from typing import AsyncGenerator
-
-
 class ThinkingNeuronServer:
 
     def __init__(self, config: ThinkerConfig) -> None:
         self.config = config
         self.router = APIRouter()
-        self.model = OllamaLLM(**self.config.model_config)
+        self.model = OllamaLLM(**self.config.model_settings.model_dump())
 
         self.router.add_api_route(
             "/think",
