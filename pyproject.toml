@@ -16,9 +16,10 @@ documentation = "https://thinking_neuron.readthedocs.io/en/latest/"
 python = ">=3.10,<4.0"
 pyyaml = "^6.0.2"
 rich = "^13.9.4"
-fastapi = "^0.115.8"
+fastapi = {extras = ["standard"], version = "^0.115.8"}
 langchain-ollama = "^0.2.3"
 pydantic = "^2.10.6"
+ollama = "^0.4.7"
 
 [tool.poetry.group.dev.dependencies]
 black = "^25.1.0"

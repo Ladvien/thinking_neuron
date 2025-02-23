@@ -1,4 +1,5 @@
 from dataclasses import dataclass, asdict
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 
@@ -15,17 +16,9 @@ class ServerConfigRequest(ThinkingServerConfig):
     pass
 
 
-class UpdateConfigResponse(BaseModel):
-    model: str
-
-
 class ThinkingRequest(BaseModel):
     text: str | None
 
 
-class ThinkingResponse(BaseModel):
-    text: str | None
-
-    # TODO: Can add response info with another
-    # url to stream the results
-    # stream_url: str
+class StreamResultRequest(BaseModel):
+    stream_id: str | None
