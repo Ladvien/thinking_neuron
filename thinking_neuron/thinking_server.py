@@ -6,7 +6,9 @@ from typing import AsyncGenerator
 from uuid import uuid4
 import ollama
 
-from thinking_neuron.models.request import StreamResultRequest
+from thinking_neuron.llm_manager import LLM_Manager
+from thinking_neuron.models.request import PullModelRequest, StreamResultRequest
+from thinking_neuron.models.response import OllamaPullModelStreamResponse
 from thinking_neuron.models.state import Stream
 
 from .models import ThinkingResponse, OllamaErroResponse, UpdateConfigResponse
@@ -19,17 +21,27 @@ from .models import (
 
 class ThinkingNeuronServer:
 
-    def __init__(self, config: ThinkingServerConfig = None) -> None:
-        if config:
-            self.current_config = config
-        else:
-            self.current_config = ThinkingServerConfig()
+    def __init__(self) -> None:
 
         self.last_response_stream = None
 
-        self._setup_llm(self.current_config)
+        self.llm_mang = LLM_Manager()
 
         self.router = APIRouter()
+
+        self.router.add_api_route(
+            "/list_models",
+            self.list_models,
+            methods=["GET"],
+            response_class=JSONResponse,
+        )
+
+        self.router.add_api_route(
+            "/pull_model",
+            self.pull_model,
+            methods=["POST"],
+            response_class=JSONResponse,
+        )
 
         self.router.add_api_route(
             "/think",
@@ -42,13 +54,6 @@ class ThinkingNeuronServer:
             "/update_settings",
             self.update_settings,
             methods=["POST"],
-            response_class=JSONResponse,
-        )
-
-        self.router.add_api_route(
-            "/list_models",
-            self.list_models,
-            methods=["GET"],
             response_class=JSONResponse,
         )
 
@@ -69,6 +74,31 @@ class ThinkingNeuronServer:
         models = ollama.list().model_dump_json()
         return JSONResponse(models)
 
+    async def pull_model(self, request: PullModelRequest) -> JSONResponse:
+        """
+        Pulls a model from the ollama service
+
+        Args:
+            model (str): The model to pull
+
+        Returns:
+            JSONResponse: The response of the pull
+        """
+        self.last_response_stream = Stream(
+            stream_id=str(uuid4()),
+            request={"model": request.model, "stream": True},
+            # WILO: The `ProgressResponse` does not work with the existing
+            # streaming response I've implemented.  I'll need to refactor
+            method=ollama.pull,
+        )
+
+        return JSONResponse(
+            {
+                "text": f"Attempting to download model: '{request.model}'",
+                "stream_url": f"/stream_response?stream_id={self.last_response_stream.stream_id}",
+            }
+        )
+
     async def update_settings(
         self, request: ServerConfigRequest
     ) -> UpdateConfigResponse:
@@ -81,7 +111,7 @@ class ThinkingNeuronServer:
         Returns:
             UpdateConfigResponse: The updated settings
         """
-        response = self._setup_llm(request)
+        response = self.llm_mang.update_settings(request)
         return response
 
     async def think(self, request: ThinkingRequest) -> StreamingResponse:
@@ -98,10 +128,10 @@ class ThinkingNeuronServer:
         self.last_response_stream = Stream(
             text=request.text,
             stream_id=stream_id,
-            request=request,
+            request={"request": request},
             method=self.generate_response,
         )
-        return JSONResponse({"stream_id": f"/stream_response?stream_id={stream_id}"})
+        return JSONResponse({"stream_url": f"/stream_response?stream_id={stream_id}"})
 
     async def stream_response(self, stream_id: str) -> StreamingResponse:
         """
@@ -113,8 +143,14 @@ class ThinkingNeuronServer:
         Returns:
             StreamingResponse: The response stream
         """
+        if not self.last_response_stream:
+            return JSONResponse(
+                {"message": "No stream available with the given ID"},
+                status_code=404,
+            )
+
         response = StreamingResponse(
-            self.last_response_stream.method(self.last_response_stream.request),
+            self.last_response_stream.method(**self.last_response_stream.request),
             media_type=self.last_response_stream.media_type,
         )
 
@@ -140,28 +176,3 @@ class ThinkingNeuronServer:
 
         async for chunk in chain.astream({"question": request.text}):
             yield chunk  # Send each chunk of response as it arrives
-
-    def _setup_llm(
-        self, config: ThinkingServerConfig
-    ) -> UpdateConfigResponse | JSONResponse:
-
-        try:
-            available_models = ollama.ps()
-        except ConnectionError as e:
-            print("asd")
-            return OllamaErroResponse()
-
-        if config.model_settings.model not in available_models:
-            progress = ollama.pull(config.model_settings.model)
-
-        self.model = OllamaLLM(
-            **config.model_settings.model_dump(),
-        )
-        print(self.model)
-        self.current_config = config
-
-        return JSONResponse(
-            content=UpdateConfigResponse(
-                **self.current_config.model_settings.model_dump(),
-            ).model_dump(),
-        )

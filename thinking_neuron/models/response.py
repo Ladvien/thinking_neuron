@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 
 class UpdateConfigResponse(BaseModel):
-    model: str
+    stream_id: str | None
 
 
 class ThinkingResponse(BaseModel):
@@ -13,6 +13,10 @@ class ThinkingResponse(BaseModel):
     # TODO: Can add response info with another
     # url to stream the results
     # stream_url: str
+
+
+class OllamaPullModelStreamResponse(BaseModel):
+    stream_id: str | None
 
 
 class OllamaErroResponse(JSONResponse):

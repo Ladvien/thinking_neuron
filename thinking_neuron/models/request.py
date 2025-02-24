@@ -12,8 +12,8 @@ class ThinkingServerConfig(BaseModel):
     model_settings: ModelSettings = ModelSettings()
 
 
-class ServerConfigRequest(ThinkingServerConfig):
-    pass
+class ServerConfigRequest(BaseModel):
+    config: ThinkingServerConfig
 
 
 class ThinkingRequest(BaseModel):
@@ -22,3 +22,7 @@ class ThinkingRequest(BaseModel):
 
 class StreamResultRequest(BaseModel):
     stream_id: str | None
+
+
+class PullModelRequest(BaseModel):
+    model: str | None
