@@ -1,6 +1,9 @@
+import logging
 from dataclasses import dataclass, asdict
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
+
+logger = logging.getLogger(__name__ + "." + __file__)
 
 
 class ModelSettings(BaseModel):

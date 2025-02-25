@@ -1,22 +1,16 @@
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse, StreamingResponse
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_ollama.llms import OllamaLLM
 from typing import AsyncGenerator
 from uuid import uuid4
 import ollama
+import logging
 
-from thinking_neuron.llm_manager import LLM_Manager
-from thinking_neuron.models.request import PullModelRequest, StreamResultRequest
-from thinking_neuron.models.response import OllamaPullModelStreamResponse
-from thinking_neuron.models.state import Stream
+from .llm_manager import LLM_Manager
+from .models import UpdateConfigResponse
+from .models import ServerConfigRequest, ThinkingRequest, PullModelRequest, Stream
 
-from .models import ThinkingResponse, OllamaErroResponse, UpdateConfigResponse
-from .models import (
-    ThinkingServerConfig,
-    ServerConfigRequest,
-    ThinkingRequest,
-)
+logger = logging.getLogger(__name__ + "." + __file__)
 
 
 class ThinkingNeuronServer:
@@ -102,28 +96,10 @@ class ThinkingNeuronServer:
     async def update_settings(
         self, request: ServerConfigRequest
     ) -> UpdateConfigResponse:
-        """
-        Updates the settings of the server
-
-        Args:
-            request (ServerConfigRequest): The request to update the settings
-
-        Returns:
-            UpdateConfigResponse: The updated settings
-        """
-        response = self.llm_mang.update_settings(request)
+        response = self.llm_mang.update(request)
         return response
 
     async def think(self, request: ThinkingRequest) -> StreamingResponse:
-        """
-        Thinks about the question
-
-        Args:
-            request (ThinkingRequest): The request to think about
-
-        Returns:
-            JSONResponse: The response to the question
-        """
         stream_id = str(uuid4())
         self.last_response_stream = Stream(
             text=request.text,
@@ -134,15 +110,6 @@ class ThinkingNeuronServer:
         return JSONResponse({"stream_url": f"/stream_response?stream_id={stream_id}"})
 
     async def stream_response(self, stream_id: str) -> StreamingResponse:
-        """
-        Streams the response of the model
-
-        Args:
-            stream_id (str): The ID of the stream
-
-        Returns:
-            StreamingResponse: The response stream
-        """
         if not self.last_response_stream:
             return JSONResponse(
                 {"message": "No stream available with the given ID"},
@@ -161,15 +128,6 @@ class ThinkingNeuronServer:
     async def generate_response(
         self, request: ThinkingRequest
     ) -> AsyncGenerator[str, None]:
-        """
-        Generates the response to the question
-
-        Args:
-            request (ThinkingRequest): The request to generate a response
-
-        Yields:
-            str: The response to the question
-        """
         template = """{question}"""
         prompt = ChatPromptTemplate.from_template(template)
         chain = prompt | self.model

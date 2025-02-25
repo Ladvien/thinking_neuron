@@ -13,7 +13,8 @@ curl -fsSL https://ollama.com/install.sh | sh
 - [Richard Madison Maturity Model](https://en.wikipedia.org/wiki/Richardson_Maturity_Model)
 - https://github.com/jtc42/fastapi-hypermodel?tab=readme-ov-file
 
-
+## FastAPI Best Practices
+- https://github.com/zhanymkanov/fastapi-best-practices?tab=readme-ov-file
 
 ## A Happening
 
