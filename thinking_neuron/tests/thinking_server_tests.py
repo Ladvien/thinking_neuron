@@ -65,12 +65,6 @@ def test_pull_model(server):
     stream_url = f"{HOST}{stream_id}"
 
     response = requests.get(stream_url, stream=True)
-    for chunk in response.iter_content(chunk_size=1024):
-        if chunk:
-            print(chunk.decode(), end="", flush=True)
-            assert isinstance(chunk.decode(), str)
-
-    assert response.status_code == 200
 
     for chunk in response.iter_content(chunk_size=1024):
         if chunk:

@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse, StreamingResponse
 from langchain_core.prompts import ChatPromptTemplate
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Generator, Iterator
 from uuid import uuid4
 import ollama
 import logging
@@ -142,10 +142,6 @@ class ThinkingNeuronServer:
                 {"message": "No stream available with the given ID"},
                 status_code=404,
             )
-
-        print(self.last_response_stream.method)
-        print(self.last_response_stream.request)
-
         stream = self.last_response_stream.method(**self.last_response_stream.request)
         response = StreamingResponse(
             stream,
@@ -170,17 +166,9 @@ class ThinkingNeuronServer:
     async def _pull_stream(
         self, request: PullModelRequest
     ) -> AsyncGenerator[str, None]:
-
-        if not self.last_response_stream:
-            return
-
-        if self.last_response_stream.stream_id != request.stream_id:
-            return
-
-        stream = self.last_response_stream.method(**self.last_response_stream.request)
-
-        async for chunk in stream:
-            yield chunk  # Send each chunk of response as it arrives
+        stream = self.llm_mang.pull_stream(request.model)
+        for chunk in stream:
+            yield json.dumps(chunk.model_dump()) + "\n"
 
     async def logs(self) -> JSONResponse:
         logs = self.self_awareness.all_log_files()

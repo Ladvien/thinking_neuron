@@ -1,4 +1,4 @@
-from typing import Any, Iterator
+from typing import Any
 from uuid import uuid4
 from fastapi.responses import JSONResponse
 from langchain_ollama import OllamaLLM
@@ -109,8 +109,11 @@ class LLM_Manager:
 
         return response
 
-    def pull_stream(self, model: str) -> Iterator[ollama.ProgressResponse]:
-        return ollama.pull(model, stream=True)
+    async def pull_stream(self, model: str) -> ollama.ProgressResponse:
+        async for part ollama.AsyncClient().pull(model, stream=True):
+            yield part
+
+            
 
     def pull_status(
         self, stream_id: str
