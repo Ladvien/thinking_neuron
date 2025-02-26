@@ -41,6 +41,8 @@ class LLM_Manager:
         self.model = None
         self.stream = None
 
+        self.update(ServerConfigRequest(config=self.config))
+
     def ready(self) -> LLM_ManagerResponse:
         response = LLM_ManagerResponse(message="not ready")
         try:
@@ -76,19 +78,17 @@ class LLM_Manager:
         logger.info(response)
         return response
 
-    def local_models_available(self) -> JSONResponse:
-        response = LLM_ManagerResponse(message="not ready")
-
+    def local_models_available(self) -> LLM_ManagerResponse:
         if not self.ready().message == "ready":
             logger.error("Attempting to get local models when not ready")
+            return LLM_ManagerResponse(message="not ready")
         else:
             response = LLM_ManagerResponse(
                 message="Local models available", models=ollama.list().model_dump()
             )
             logger.info("Local models available:")
             logger.info(response)
-
-        return response
+            return response
 
     # TODO: There is no way to check if a model is available to download
     # would need to use website data or wait until feature is

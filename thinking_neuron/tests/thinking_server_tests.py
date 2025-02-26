@@ -1,34 +1,43 @@
 import requests
 from rich import print
 import json
+
+import uvicorn
 from thinking_neuron.models.request import ThinkingServerConfig
-from thinking_neuron.thinking_server import ServerConfigRequest
+from thinking_neuron.thinking_server import ServerConfigRequest, ThinkingNeuronServer
 from thinking_neuron.models import ModelSettings
 
-# HOST = "http://192.168.1.140:8000"
 HOST = "http://0.0.0.0:8000"
+THINK_URL = f"{HOST}/think"
+UPDATE_SETTINGS_URL = f"{HOST}/update_settings"
 
-url = f"{HOST}/think"
 
-response = requests.post(url, json={"text": "What's up dude?"}, stream=True)
-for chunk in response.iter_content(chunk_size=1024):
-    if chunk:
-        print(chunk.decode(), end="", flush=True)
+def test_think(server):
+    response = requests.post(THINK_URL, json={"text": "What's up dude?"})
+    data = response.json()
+    stream_url = data["stream_url"]
+    stream_url = f"{HOST}{stream_url}"
 
-# UPDATE_SETTINGS_URL = f"{HOST}/update_settings"
+    response = requests.get(stream_url, stream=True)
 
-# model_settings = ModelSettings(model="gemma:7b")
-# server_config = ThinkingServerConfig(
-#     name="bob",
-#     model_settings=model_settings,
-# )
-# data = ServerConfigRequest(config=server_config).model_dump()
+    for chunk in response.iter_content(chunk_size=1024):
+        if chunk:
+            print(chunk.decode(), end="", flush=True)
+            assert isinstance(chunk.decode(), str)
 
-# print(data)
+    assert response.status_code == 200
 
-# result = requests.post(UPDATE_SETTINGS_URL, json=data)
 
-# print(result.json())
+# def test_update_settings(thinking_server: str):
+#     model_settings = ModelSettings(model="gemma:7b")
+#     server_config = ThinkingServerConfig(
+#         name="bob",
+#         model_settings=model_settings,
+#     )
+#     data = ServerConfigRequest(config=server_config).model_dump()
+#     result = requests.post(UPDATE_SETTINGS_URL, json=data)
+#     assert result.status_code == 200
+
 
 # LIST_MODELS_URL = f"{HOST}/list_models"
 # result = requests.get(LIST_MODELS_URL)

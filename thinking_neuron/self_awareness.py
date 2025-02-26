@@ -63,7 +63,7 @@ class SelfAwareness:
             if code_file.name == name:
                 return code_file
 
-    def all_code_files(self) -> list:
+    def all_code_files(self) -> list[CodeFile]:
         return self._load_code()
 
     def all_log_files(self) -> list:

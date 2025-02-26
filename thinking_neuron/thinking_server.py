@@ -5,6 +5,9 @@ from typing import AsyncGenerator
 from uuid import uuid4
 import ollama
 import logging
+from rich import print
+
+from thinking_neuron.self_awareness import SelfAwareness
 
 from .llm_manager import LLM_Manager
 from .models import UpdateConfigResponse
@@ -20,6 +23,7 @@ class ThinkingNeuronServer:
         self.last_response_stream = None
 
         self.llm_mang = LLM_Manager()
+        self.self_awareness = SelfAwareness()
 
         self.router = APIRouter()
 
@@ -58,6 +62,20 @@ class ThinkingNeuronServer:
             response_class=StreamingResponse,
         )
 
+        self.router.add_api_route(
+            "/logs",
+            self.logs,
+            methods=["GET"],
+            response_class=JSONResponse,
+        )
+
+        self.router.add_api_route(
+            "/code",
+            self.code,
+            methods=["GET"],
+            response_class=JSONResponse,
+        )
+
     async def list_models(self) -> JSONResponse:
         """
         Lists all available models
@@ -65,8 +83,10 @@ class ThinkingNeuronServer:
         Returns:
             JSONResponse: A response containing the list
         """
-        models = ollama.list().model_dump_json()
-        return JSONResponse(models)
+        models = self.llm_mang.local_models_available()
+        logger.info("Local models available:")
+        logger.info(models)
+        return JSONResponse(models.model_dump_json())
 
     async def pull_model(self, request: PullModelRequest) -> JSONResponse:
         """
@@ -130,7 +150,17 @@ class ThinkingNeuronServer:
     ) -> AsyncGenerator[str, None]:
         template = """{question}"""
         prompt = ChatPromptTemplate.from_template(template)
-        chain = prompt | self.model
+
+        chain = prompt | self.llm_mang.model
 
         async for chunk in chain.astream({"question": request.text}):
             yield chunk  # Send each chunk of response as it arrives
+
+    async def logs(self) -> JSONResponse:
+        logs = self.self_awareness.all_log_files()
+        return JSONResponse(logs)
+
+    async def code(self) -> JSONResponse:
+        code = self.self_awareness.all_code_files()
+
+        return JSONResponse([c.model_dump() for c in code])

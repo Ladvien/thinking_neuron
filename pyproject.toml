@@ -20,6 +20,7 @@ fastapi = {extras = ["standard"], version = "^0.115.8"}
 langchain-ollama = "^0.2.3"
 pydantic = "^2.10.6"
 ollama = "^0.4.7"
+pytest = "^8.3.4"
 
 [tool.poetry.group.dev.dependencies]
 black = "^25.1.0"
@@ -31,6 +32,17 @@ sphinx-autoapi = "^3.5.0"
 sphinx-autodoc2 = "^0.5.0"
 doc-utils = "^0.0.2"
 poethepoet = "^0.32.2"
+
+
+[tool.pytest.ini_options]
+pythonpath = "."
+minversion = "6.0"
+addopts = "-ra -q -vvv -W ignore::DeprecationWarning"
+
+
+testpaths = ["thinking_neuron/tests"]
+
+
 
 [build-system]
 requires = ["poetry-core"]
