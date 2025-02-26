@@ -23,6 +23,10 @@ class ThinkingRequest(BaseModel):
     text: str | None
 
 
+class PullModelRequest(BaseModel):
+    model: str | None
+
+
 class StreamResultRequest(BaseModel):
     stream_id: str | None
 

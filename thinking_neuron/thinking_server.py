@@ -6,6 +6,7 @@ from uuid import uuid4
 import ollama
 import logging
 from rich import print
+import json
 
 from thinking_neuron.self_awareness import SelfAwareness
 
@@ -83,10 +84,10 @@ class ThinkingNeuronServer:
         Returns:
             JSONResponse: A response containing the list
         """
-        models = self.llm_mang.local_models_available()
+        models = self.llm_mang.local_models_available().models
         logger.info("Local models available:")
         logger.info(models)
-        return JSONResponse(models.model_dump_json())
+        return JSONResponse(models)
 
     async def pull_model(self, request: PullModelRequest) -> JSONResponse:
         """
@@ -98,26 +99,26 @@ class ThinkingNeuronServer:
         Returns:
             JSONResponse: The response of the pull
         """
+
+        stream_id = str(uuid4())
+
+        # Don't wait, start pulling the model.
+        _ = self.llm_mang.pull(request.model)
+
+        # Setup stream callback.
         self.last_response_stream = Stream(
-            stream_id=str(uuid4()),
-            request={"model": request.model, "stream": True},
-            # WILO: The `ProgressResponse` does not work with the existing
-            # streaming response I've implemented.  I'll need to refactor
-            method=ollama.pull,
+            text=f"Attempting to download model: '{request.model}'",
+            stream_id=stream_id,
+            request={"request": request},
+            method=self._pull_stream,
         )
 
-        return JSONResponse(
-            {
-                "text": f"Attempting to download model: '{request.model}'",
-                "stream_url": f"/stream_response?stream_id={self.last_response_stream.stream_id}",
-            }
-        )
+        return JSONResponse({"stream_url": f"/stream_response?stream_id={stream_id}"})
 
     async def update_settings(
         self, request: ServerConfigRequest
     ) -> UpdateConfigResponse:
-        response = self.llm_mang.update(request)
-        return response
+        return JSONResponse(self.llm_mang.update(request).model_dump_json())
 
     async def think(self, request: ThinkingRequest) -> StreamingResponse:
         stream_id = str(uuid4())
@@ -125,7 +126,7 @@ class ThinkingNeuronServer:
             text=request.text,
             stream_id=stream_id,
             request={"request": request},
-            method=self.generate_response,
+            method=self._think_stream,
         )
         return JSONResponse({"stream_url": f"/stream_response?stream_id={stream_id}"})
 
@@ -136,8 +137,18 @@ class ThinkingNeuronServer:
                 status_code=404,
             )
 
+        if self.last_response_stream.stream_id != stream_id:
+            return JSONResponse(
+                {"message": "No stream available with the given ID"},
+                status_code=404,
+            )
+
+        print(self.last_response_stream.method)
+        print(self.last_response_stream.request)
+
+        stream = self.last_response_stream.method(**self.last_response_stream.request)
         response = StreamingResponse(
-            self.last_response_stream.method(**self.last_response_stream.request),
+            stream,
             media_type=self.last_response_stream.media_type,
         )
 
@@ -145,7 +156,7 @@ class ThinkingNeuronServer:
 
         return response
 
-    async def generate_response(
+    async def _think_stream(
         self, request: ThinkingRequest
     ) -> AsyncGenerator[str, None]:
         template = """{question}"""
@@ -154,6 +165,21 @@ class ThinkingNeuronServer:
         chain = prompt | self.llm_mang.model
 
         async for chunk in chain.astream({"question": request.text}):
+            yield chunk  # Send each chunk of response as it arrives
+
+    async def _pull_stream(
+        self, request: PullModelRequest
+    ) -> AsyncGenerator[str, None]:
+
+        if not self.last_response_stream:
+            return
+
+        if self.last_response_stream.stream_id != request.stream_id:
+            return
+
+        stream = self.last_response_stream.method(**self.last_response_stream.request)
+
+        async for chunk in stream:
             yield chunk  # Send each chunk of response as it arrives
 
     async def logs(self) -> JSONResponse:

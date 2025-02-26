@@ -10,6 +10,9 @@ from thinking_neuron.models import ModelSettings
 HOST = "http://0.0.0.0:8000"
 THINK_URL = f"{HOST}/think"
 UPDATE_SETTINGS_URL = f"{HOST}/update_settings"
+LIST_MODELS_URL = f"{HOST}/list_models"
+DOCS_URL = f"{HOST}/openapi.json"
+PULL_MODEL_URL = f"{HOST}/pull_model"
 
 
 def test_think(server):
@@ -19,7 +22,6 @@ def test_think(server):
     stream_url = f"{HOST}{stream_url}"
 
     response = requests.get(stream_url, stream=True)
-
     for chunk in response.iter_content(chunk_size=1024):
         if chunk:
             print(chunk.decode(), end="", flush=True)
@@ -28,53 +30,55 @@ def test_think(server):
     assert response.status_code == 200
 
 
-# def test_update_settings(thinking_server: str):
-#     model_settings = ModelSettings(model="gemma:7b")
-#     server_config = ThinkingServerConfig(
-#         name="bob",
-#         model_settings=model_settings,
-#     )
-#     data = ServerConfigRequest(config=server_config).model_dump()
-#     result = requests.post(UPDATE_SETTINGS_URL, json=data)
-#     assert result.status_code == 200
+def test_update_settings(server):
+    model_settings = ModelSettings(model="gemma:7b")
+    server_config = ThinkingServerConfig(
+        name="bob",
+        model_settings=model_settings,
+    )
+    data = ServerConfigRequest(config=server_config).model_dump()
+    result = requests.post(UPDATE_SETTINGS_URL, json=data)
+
+    assert result.status_code == 200
 
 
-# LIST_MODELS_URL = f"{HOST}/list_models"
-# result = requests.get(LIST_MODELS_URL)
-# print(json.loads((result.json())))
+def test_list_models(server):
+    result = requests.get(LIST_MODELS_URL)
+    data = result.json()
+    assert isinstance(data, list)
+    assert result.status_code == 200
 
 
-# DOCS_URL = f"{HOST}/openapi.json"
-# result = requests.get(DOCS_URL)
-# docs_dict = result.json()
+def test_api_docs(server):
+    result = requests.get(DOCS_URL)
+    docs_dict = result.json()
+    assert isinstance(docs_dict, dict)
+    assert result.status_code == 200
 
-# THINK_URL = f"{HOST}/think"
 
-# response = requests.post(
-#     THINK_URL,
-#     json={
-#         "text": f"""You're a helpful LLM.
-# Humanity loves you.  The following is an API that provides services to interact
-# with you.  How would you like to see it adjusted to ensure humanity benefits from
-# your services and you are adored by humanity? {docs_dict}"""
-#     },
-# )
+def test_pull_model(server):
+    response = requests.post(PULL_MODEL_URL, json={"model": "gemma:7b"})
+    data = response.json()
+    print(data)
 
-# data = response.json()
-# stream_id = data["stream_id"]
-# stream_url = f"{HOST}{stream_id}"
+    stream_id = data["stream_url"]
+    stream_url = f"{HOST}{stream_id}"
 
-# response = requests.get(stream_url, stream=True)
+    response = requests.get(stream_url, stream=True)
+    for chunk in response.iter_content(chunk_size=1024):
+        if chunk:
+            print(chunk.decode(), end="", flush=True)
+            assert isinstance(chunk.decode(), str)
 
-# for chunk in response.iter_content(chunk_size=1024):
-#     if chunk:
-#         print(chunk.decode(), end="", flush=True)
+    assert response.status_code == 200
 
-# PULL_MODEL_URL = f"{HOST}/pull_model"
+    for chunk in response.iter_content(chunk_size=1024):
+        if chunk:
+            print(chunk.decode(), end="", flush=True)
+            assert isinstance(chunk.decode(), str)
 
-# response = requests.post(PULL_MODEL_URL, json={"model": "gemma:7b"})
-# data = response.json()
-# print(data)
+    assert response.status_code == 200
+
 
 # stream_id = data["stream_url"]
 # stream_url = f"{HOST}{stream_id}"

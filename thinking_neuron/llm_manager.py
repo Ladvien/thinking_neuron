@@ -1,8 +1,10 @@
+from typing import Any, Iterator
 from uuid import uuid4
 from fastapi.responses import JSONResponse
 from langchain_ollama import OllamaLLM
 from pydantic import BaseModel
 import ollama
+import json
 from .models import (
     ThinkingServerConfig,
     ServerConfigRequest,
@@ -15,20 +17,14 @@ logger = logging.getLogger(__name__ + "." + __file__)
 
 class LLM_ManagerResponse(BaseModel):
     message: str
-    models: dict = None
+    models: Any = None
     stream_id: str = None
     stream: ollama.ListResponse = None
 
 
-class Stream:
-    def __init__(self, message: str, stream_id: str, request: dict, method: callable):
-        self.message = message
-        self.stream_id = stream_id
-        self.request = request
-        self.method = method
-
-
 class LLM_Manager:
+
+    model: OllamaLLM = None
 
     def __init__(self, config: ThinkingServerConfig = None) -> None:
         self.config = config if config else ThinkingServerConfig()
@@ -36,12 +32,9 @@ class LLM_Manager:
             self.update(ServerConfigRequest(config=self.config))
             logger.info("LLM Manager initialized")
         except Exception as e:
-            logger.error(f"Error initializing LLM Manager: {e}")
-
-        self.model = None
-        self.stream = None
-
-        self.update(ServerConfigRequest(config=self.config))
+            message = f"Error initializing LLM Manager: {e}"
+            logger.error(message)
+            raise Exception(message)
 
     def ready(self) -> LLM_ManagerResponse:
         response = LLM_ManagerResponse(message="not ready")
@@ -83,11 +76,16 @@ class LLM_Manager:
             logger.error("Attempting to get local models when not ready")
             return LLM_ManagerResponse(message="not ready")
         else:
+            model_dump = ollama.list().model_dump()["models"]
+
+            # Convert datetime objects to strings
+            models = [
+                json.loads(json.dumps(model, default=str)) for model in model_dump
+            ]
             response = LLM_ManagerResponse(
-                message="Local models available", models=ollama.list().model_dump()
+                message="Local models available",
+                models=models,
             )
-            logger.info("Local models available:")
-            logger.info(response)
             return response
 
     # TODO: There is no way to check if a model is available to download
@@ -97,27 +95,22 @@ class LLM_Manager:
     # def remote_models_available(self) -> list[str]:
     #     return ollama.ps()
 
-    def pull(self, model_name: str) -> ollama.ProgressResponse:
+    def pull(self, model: str) -> LLM_ManagerResponse:
         response = LLM_ManagerResponse(message="not ready")
-        stream_id = str(uuid4())
 
         try:
             # Kicks of the pull, but doesn't provide stream.
-            _ = ollama.pull(model_name, stream=True)
-            message = f"Pulling model {model_name}"
+            _ = ollama.pull(model, stream=True)
+            message = f"Pulling model {model}"
             logger.info(message)
-            self.stream = Stream(
-                message=message,
-                stream_id=stream_id,
-                request={"model": model_name, "stream": True},
-                method=ollama.pull,
-            )
-            response.stream_id = stream_id
         except Exception as e:
             error_message = f"Error pulling model: {e}"
             logging.error(error_message)
 
         return response
+
+    def pull_stream(self, model: str) -> Iterator[ollama.ProgressResponse]:
+        return ollama.pull(model, stream=True)
 
     def pull_status(
         self, stream_id: str
@@ -129,7 +122,17 @@ class LLM_Manager:
         else:
             return self.stream.method(**self.stream.request)
 
-    def update(self, config: ThinkingServerConfig) -> dict:
-        self.model = OllamaLLM(
-            **self.config.model_settings.model_dump(),
+    def update(self, request: ServerConfigRequest) -> LLM_ManagerResponse:
+        self.config = request.config
+        model_settings_dump = self.config.model_settings.model_dump()
+
+        self.model = OllamaLLM(**model_settings_dump)
+        logger.info("Model updated")
+
+        response = LLM_ManagerResponse(
+            message="Model updated", models=model_settings_dump
         )
+
+        logger.info(response)
+
+        return response
