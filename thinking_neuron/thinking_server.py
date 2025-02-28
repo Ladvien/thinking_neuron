@@ -1,15 +1,12 @@
+import json
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse, StreamingResponse
-from langchain_core.prompts import ChatPromptTemplate
-from typing import AsyncGenerator, Generator, Iterator
+from typing import AsyncGenerator
 from uuid import uuid4
-import ollama
 import logging
 from rich import print
-import json
 
-from thinking_neuron.self_awareness import SelfAwareness
-
+from .self_awareness import SelfAwareness
 from .llm_manager import LLM_Manager
 from .models import UpdateConfigResponse
 from .models import ServerConfigRequest, ThinkingRequest, PullModelRequest, Stream
@@ -77,35 +74,22 @@ class ThinkingNeuronServer:
             response_class=JSONResponse,
         )
 
-    async def list_models(self) -> JSONResponse:
-        """
-        Lists all available models
+        logger.info("ThinkingNeuronServer initialized")
 
-        Returns:
-            JSONResponse: A response containing the list
-        """
+    async def list_models(self) -> JSONResponse:
         models = self.llm_mang.local_models_available().models
         logger.info("Local models available:")
         logger.info(models)
         return JSONResponse(models)
 
     async def pull_model(self, request: PullModelRequest) -> JSONResponse:
-        """
-        Pulls a model from the ollama service
-
-        Args:
-            model (str): The model to pull
-
-        Returns:
-            JSONResponse: The response of the pull
-        """
-
         stream_id = str(uuid4())
 
         # Don't wait, start pulling the model.
+        logger.info(f"Started pulling model: '{request.model}'")
         _ = self.llm_mang.pull(request.model)
 
-        # Setup stream callback.
+        # # Setup stream callback.
         self.last_response_stream = Stream(
             text=f"Attempting to download model: '{request.model}'",
             stream_id=stream_id,
@@ -123,7 +107,6 @@ class ThinkingNeuronServer:
     async def think(self, request: ThinkingRequest) -> StreamingResponse:
         stream_id = str(uuid4())
         self.last_response_stream = Stream(
-            text=request.text,
             stream_id=stream_id,
             request={"request": request},
             method=self._think_stream,
@@ -131,6 +114,8 @@ class ThinkingNeuronServer:
         return JSONResponse({"stream_url": f"/stream_response?stream_id={stream_id}"})
 
     async def stream_response(self, stream_id: str) -> StreamingResponse:
+        print(stream_id)
+        print(self.last_response_stream)
         if not self.last_response_stream:
             return JSONResponse(
                 {"message": "No stream available with the given ID"},
@@ -155,20 +140,18 @@ class ThinkingNeuronServer:
     async def _think_stream(
         self, request: ThinkingRequest
     ) -> AsyncGenerator[str, None]:
-        template = """{question}"""
-        prompt = ChatPromptTemplate.from_template(template)
-
-        chain = prompt | self.llm_mang.model
-
-        async for chunk in chain.astream({"question": request.text}):
-            yield chunk  # Send each chunk of response as it arrives
+        async for chunk in self.llm_mang.generate(request.messages):
+            if isinstance(chunk, bytes):  # Ensure the response is properly encoded
+                yield chunk
+            else:
+                yield str(chunk) + "\n"  # Convert to string and add newline for se
 
     async def _pull_stream(
         self, request: PullModelRequest
     ) -> AsyncGenerator[str, None]:
-        stream = self.llm_mang.pull_stream(request.model)
-        for chunk in stream:
-            yield json.dumps(chunk.model_dump()) + "\n"
+        async for chunk in await self.llm_mang.pull_status(request.model):
+            data = chunk.model_dump()
+            yield json.dumps(data) + "\n"
 
     async def logs(self) -> JSONResponse:
         logs = self.self_awareness.all_log_files()

@@ -4,16 +4,17 @@ import json
 from thinking_neuron.models.request import ThinkingServerConfig
 from thinking_neuron.thinking_server import ServerConfigRequest
 from thinking_neuron.models import ModelSettings
+from thinking_neuron.tests import PULL_MODEL_URL
 
 # HOST = "http://192.168.1.140:8000"
 HOST = "http://0.0.0.0:8000"
 
-url = f"{HOST}/think"
+# url = f"{HOST}/think"
 
-response = requests.post(url, json={"text": "What's up dude?"}, stream=True)
-for chunk in response.iter_content(chunk_size=1024):
-    if chunk:
-        print(chunk.decode(), end="", flush=True)
+# response = requests.post(url, json={"text": "What's up dude?"}, stream=True)
+# for chunk in response.iter_content(chunk_size=1024):
+#     if chunk:
+#         print(chunk.decode(), end="", flush=True)
 
 # UPDATE_SETTINGS_URL = f"{HOST}/update_settings"
 
@@ -90,3 +91,21 @@ for chunk in response.iter_content(chunk_size=1024):
 # data = response.json()
 
 # print(data)
+
+
+response = requests.post(PULL_MODEL_URL, json={"model": "gemma:7b"})
+print(response)
+data = response.json()
+print(data)
+
+stream_id = data["stream_url"]
+stream_url = f"{HOST}{stream_id}"
+
+response = requests.get(stream_url, stream=True)
+
+for chunk in response.iter_content():
+    if chunk:
+        print(chunk.decode(), end="", flush=True)
+        assert isinstance(chunk.decode(), str)
+
+assert response.status_code == 200

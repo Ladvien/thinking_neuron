@@ -1,6 +1,4 @@
-from typing import Any
-from uuid import uuid4
-from fastapi.responses import JSONResponse
+from typing import Any, AsyncGenerator, Generator
 from langchain_ollama import OllamaLLM
 from pydantic import BaseModel
 import ollama
@@ -31,6 +29,11 @@ class LLM_Manager:
         try:
             self.update(ServerConfigRequest(config=self.config))
             logger.info("LLM Manager initialized")
+        except ollama._types.ResponseError as e:
+            message = f"Error initializing LLM Manager: {e}"
+            logger.error(message)
+            logger.info("Attempting to pull model")
+            self.pull(self.config.model_settings.model)
         except Exception as e:
             message = f"Error initializing LLM Manager: {e}"
             logger.error(message)
@@ -43,11 +46,11 @@ class LLM_Manager:
             logger.info("Ollama is running")
             response = LLM_ManagerResponse(message="ready")
         except ConnectionError:
-            logging.error("Ollama may not be running.")
+            logger.error("Ollama may not be running.")
         except ollama.ResponseError as e:
-            logging.error(f"Ollama error: {e}")
+            logger.error(f"Ollama error: {e}")
         except Exception as e:
-            logging.error(f"Unknown error: {e}")
+            logger.error(f"Unknown error: {e}")
 
         return response
 
@@ -64,7 +67,7 @@ class LLM_Manager:
             logger.info(f"Model status: {response}")
         except Exception as e:
             error_message = f"Error getting model status: {e}"
-            logging.error(error_message)
+            logger.error(error_message)
             response = {"message": error_message}
 
         logger.info("Model status:")
@@ -96,46 +99,49 @@ class LLM_Manager:
     #     return ollama.ps()
 
     def pull(self, model: str) -> LLM_ManagerResponse:
-        response = LLM_ManagerResponse(message="not ready")
 
         try:
+            # TODO: Check if the model has already been downloaded.
+
             # Kicks of the pull, but doesn't provide stream.
-            _ = ollama.pull(model, stream=True)
-            message = f"Pulling model {model}"
+            logger.info(f"Started pulling model: '{model}'")
+            message = f"pulling model {model}"
             logger.info(message)
+
+            _ = ollama.pull(model, stream=True)
+
+            logger.info(f"Pulling model: '{model}'")
+
+            return LLM_ManagerResponse(message=message)
+
+        except ollama.ResponseError as e:
+            error_message = f"Error pulling model: {e}"
+            logger.error(error_message)
+            return LLM_ManagerResponse(message=error_message)
+
         except Exception as e:
             error_message = f"Error pulling model: {e}"
-            logging.error(error_message)
+            logger.error(error_message)
+            return LLM_ManagerResponse(message=error_message)
 
-        return response
-
-    async def pull_stream(self, model: str) -> ollama.ProgressResponse:
-        async for part ollama.AsyncClient().pull(model, stream=True):
-            yield part
-
-            
-
-    def pull_status(
-        self, stream_id: str
-    ) -> LLM_ManagerResponse | ollama.ProcessResponse:
-        if not self.stream and self.stream.stream_id == stream_id:
-            message = f"No stream available matching stream_id: {stream_id}"
-            logger.error(message)
-            return LLM_ManagerResponse(message=message)
-        else:
-            return self.stream.method(**self.stream.request)
+    async def pull_status(
+        self, model: str
+    ) -> Generator[ollama.ListResponse, None, None]:
+        return await ollama.AsyncClient().pull(model, stream=True)
 
     def update(self, request: ServerConfigRequest) -> LLM_ManagerResponse:
         self.config = request.config
-        model_settings_dump = self.config.model_settings.model_dump()
+        logger.info("Config updated")
+        return LLM_ManagerResponse(message="Model updated")
 
-        self.model = OllamaLLM(**model_settings_dump)
-        logger.info("Model updated")
-
-        response = LLM_ManagerResponse(
-            message="Model updated", models=model_settings_dump
-        )
-
-        logger.info(response)
-
-        return response
+    async def generate(
+        self, messages: list[str]
+    ) -> AsyncGenerator[ollama.ChatResponse, None]:
+        messages = [
+            ollama.Message(role="user", content=message) for message in messages
+        ]
+        async for chunk in await ollama.AsyncClient().chat(
+            self.config.model_settings.model, messages, stream=True
+        ):
+            logger.info(type(chunk))
+            yield chunk

@@ -52,5 +52,6 @@ build-backend = "poetry.core.masonry.api"
 docs         = "sphinx-build docs/source docs/build/html" # a simple command task
 docs_view    = "sphinx-autobuild docs/source docs/build/html" # a simple command task
 patch        = "poetry version patch" # a simple command task
-_publish      = "poetry publish --build" # a simple command task
+_publish     = "poetry publish --build" # a simple command task
+test         = "pytest thinking_neuron/tests/*"
 release = ["docs", "patch", "_publish"] # a task that depends on other tasks
