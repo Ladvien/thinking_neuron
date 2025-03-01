@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__ + "." + __file__)
 
 
 class ModelSettings(BaseModel):
-    model: str = Field(default="deepseek-r1")
+    model: str = Field(default="deepseek-r1:8b")
 
 
 class ThinkingServerConfig(BaseModel):
@@ -29,7 +29,3 @@ class PullModelRequest(BaseModel):
 
 class StreamResultRequest(BaseModel):
     stream_id: str | None
-
-
-class PullModelRequest(BaseModel):
-    model: str | None

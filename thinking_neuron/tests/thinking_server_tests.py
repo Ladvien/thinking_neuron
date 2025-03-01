@@ -16,6 +16,8 @@ UPDATE_SETTINGS_URL = f"{HOST}/update_settings"
 LIST_MODELS_URL = f"{HOST}/list_models"
 DOCS_URL = f"{HOST}/openapi.json"
 PULL_MODEL_URL = f"{HOST}/pull_model"
+LOGS_URL = f"{HOST}/logs"
+CODE_URL = f"{HOST}/code"
 
 logger = logging.getLogger(__name__ + "." + __file__)
 
@@ -128,28 +130,3 @@ def test_pull_model(server):
     assert response.status_code == 200
 
     os.system(f"ollama rm {MODEL_FOR_PULL_TEST}")
-
-
-# stream_id = data["stream_url"]
-# stream_url = f"{HOST}{stream_id}"
-
-# response = requests.get(stream_url, stream=True)
-
-# for chunk in response.iter_content(chunk_size=1024):
-#     if chunk:
-#         print(chunk.decode(), end="", flush=True)
-
-
-# GET_LOGS_URL = f"{HOST}/logs"
-
-# response = requests.get(GET_LOGS_URL)
-# data = response.json()
-# print(data)
-
-
-# GET_CODE_FILES = f"{HOST}/code"
-
-# response = requests.get(GET_CODE_FILES)
-# data = response.json()
-
-# print(data)

@@ -141,10 +141,8 @@ class ThinkingNeuronServer:
         self, request: ThinkingRequest
     ) -> AsyncGenerator[str, None]:
         async for chunk in self.llm_mang.generate(request.messages):
-            if isinstance(chunk, bytes):  # Ensure the response is properly encoded
-                yield chunk
-            else:
-                yield str(chunk) + "\n"  # Convert to string and add newline for se
+            logger.info(chunk.model_dump_json())
+            yield chunk.model_dump_json()
 
     async def _pull_stream(
         self, request: PullModelRequest
@@ -157,7 +155,16 @@ class ThinkingNeuronServer:
         logs = self.self_awareness.all_log_files()
         return JSONResponse(logs)
 
-    async def code(self) -> JSONResponse:
-        code = self.self_awareness.all_code_files()
+    async def code(self, filename: str = None) -> JSONResponse:
+        if filename:
+            code = self.self_awareness.code_file(filename)
+            if code is None:
+                return JSONResponse(
+                    {"message": f"No code file found with name: '{filename}'"},
+                    status_code=404,
+                )
 
+            return JSONResponse(code.model_dump())
+
+        code = self.self_awareness.all_code_files()
         return JSONResponse([c.model_dump() for c in code])

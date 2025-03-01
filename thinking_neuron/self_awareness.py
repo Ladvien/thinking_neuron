@@ -59,7 +59,10 @@ class SelfAwareness:
             return content
 
     def code_file(self, name: str) -> CodeFile:
-        for code_file in self.load_code():
+        if name is None:
+            return None
+
+        for code_file in self._load_code():
             if code_file.name == name:
                 return code_file
 

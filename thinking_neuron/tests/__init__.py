@@ -5,4 +5,6 @@ from .thinking_server_tests import (
     PULL_MODEL_URL,
     HOST,
     THINK_URL,
+    LOGS_URL,
+    CODE_URL,
 )
