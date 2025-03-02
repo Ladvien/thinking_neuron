@@ -11,7 +11,7 @@ import time
 import threading
 
 
-from thinking_neuron.thinking_server import ThinkingNeuronServer
+from thinking_neuron.thinking_server import ThinkingNeuronServer, ToolConfig
 
 
 class Server(uvicorn.Server):
@@ -33,12 +33,15 @@ class Server(uvicorn.Server):
 
 @pytest.fixture(scope="session")
 def server():
+    HOST = "0.0.0.0"
+    PORT = 8000
+
     app = FastAPI()
 
     speech_neuron = ThinkingNeuronServer()
     app.include_router(speech_neuron.router)
 
-    config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
+    config = uvicorn.Config(app, host=HOST, port=PORT, log_level="info")
     server = Server(config=config)
 
     with server.run_in_thread():

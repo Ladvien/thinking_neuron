@@ -7,7 +7,11 @@ import uvicorn
 import os
 
 from thinking_neuron.models.request import ThinkingServerConfig
-from thinking_neuron.thinking_server import ServerConfigRequest, ThinkingNeuronServer
+from thinking_neuron.thinking_server import (
+    ServerConfigRequest,
+    ThinkingNeuronServer,
+    ToolConfig,
+)
 from thinking_neuron.models import ModelSettings
 
 HOST = "http://0.0.0.0:8000"

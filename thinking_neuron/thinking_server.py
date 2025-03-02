@@ -1,10 +1,15 @@
+from abc import ABC, abstractmethod
 import json
+from dataclasses import dataclass
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse, StreamingResponse
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Protocol
 from uuid import uuid4
 import logging
 from rich import print
+import requests
+
+from thinking_neuron.entity import Tool, ToolConfig
 
 from .self_awareness import SelfAwareness
 from .llm_manager import LLM_Manager
@@ -22,7 +27,6 @@ class ThinkingNeuronServer:
 
         self.llm_mang = LLM_Manager()
         self.self_awareness = SelfAwareness()
-
         self.router = APIRouter()
 
         self.router.add_api_route(
