@@ -6,13 +6,16 @@ import logging
 import uvicorn
 import os
 
-from thinking_neuron.models.request import ThinkingServerConfig
-from thinking_neuron.thinking_server import (
+from thinking_tool.models.request import ThinkingServerConfig
+from thinking_tool.thinking_server import (
     ServerConfigRequest,
-    ThinkingNeuronServer,
+    ThinkingToolServer,
     ToolConfig,
 )
-from thinking_neuron.models import ModelSettings
+from thinking_tool.models import ThinkingRequest
+from thinking_tool.thinking_client import ThinkingToolClient
+
+from thinking_tool.models import ModelSettings
 
 HOST = "http://0.0.0.0:8000"
 THINK_URL = f"{HOST}/think"
@@ -74,8 +77,13 @@ def downloaded_model(server):
     return SMALL_MODEL_NAME
 
 
-def test_think(server, downloaded_model):
-    response = requests.post(THINK_URL, json={"messages": ["What's up dude?"]})
+@pytest.fixture
+def client():
+    return ThinkingToolClient(base_url=HOST)
+
+
+def test_think(server, downloaded_model, client: ThinkingToolClient):
+    response = client.think(ThinkingRequest(messages=["What's up dude?"]))
     data = response.json()
     print(data)
     stream_url = data["stream_url"]

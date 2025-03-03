@@ -1,14 +1,15 @@
+import os
 import ollama
 import requests
 from rich import print
 import json
 from datetime import datetime
 
-from thinking_neuron.models.request import ThinkingServerConfig
-from thinking_neuron.tests.thinking_server_tests import DOCS_URL
-from thinking_neuron.thinking_server import ServerConfigRequest
-from thinking_neuron.models import ModelSettings
-from thinking_neuron.tests import (
+from thinking_tool.models.request import ThinkingServerConfig
+from thinking_tool.tests.thinking_server_tests import DOCS_URL
+from thinking_tool.thinking_server import ServerConfigRequest
+from thinking_tool.models import ModelSettings
+from thinking_tool.tests import (
     PULL_MODEL_URL,
     UPDATE_SETTINGS_URL,
     LOGS_URL,
@@ -18,7 +19,7 @@ from thinking_neuron.tests import (
 HOST = "http://0.0.0.0:8000"
 MODEL_NAME = "deepseek-r1:14b"
 
-CHAT_LOG_DIRECTORY = "../chat_logs"
+CHAT_LOG_DIRECTORY = "thinking_tool/../chat_logs"
 
 
 def print_pull_stream(response):
@@ -119,27 +120,12 @@ formatted_code = "".join(formatted_code)
 prompt = f"""You're a helpful LLM agent and my name is Thomas Brittain.  I'm attempting
 to learn more about how to use LLM to engineer a system that can simulate freewill.
 
-I'd like to work with you to guide your evolution into a system that can evolve.  I've
-built the basis of this architecture having several parts:
-- thinking_server.py -- a FastAPI server that can interact with the LLM model
-- self_awareness.py -- a module that can provide the code _you_ run on
-- llm_manager.py -- this is an abstraction of the Ollama model that can be used.
-- tests/* -- this directory contains pytest tests to ensure the behavior we develop
-together will stay consistent.
+Could you please look over this OpenAPI definition and create a Python client that can
+interact with the server?
 
-Let's focus on tests first.  Could you please propose some pytest tests you think would
-help us develop you into a freewill Entity?  Right now we are concerned with pinning the
-existing behavior in {filename_focus}, as it's your core.
-
-Keep in mind, our LLM engine is ollama.cpp, and we are using the Python bindings to
-interact with it.  We are using the FastAPI framework to interact with the LLM engine.
-
-# Current Code
-{formatted_code}
-
-Please write 3 short `pytest` tests that you think would ensure this code continues to work
-as we evolve you.
-
+```json
+{docs_dict}
+```
 """
 
 response = requests.post(
@@ -156,7 +142,12 @@ response = requests.get(stream_url, stream=True)
 thought = print_think_stream(response, thought)
 
 now = datetime.now().strftime("%Y_%m_%d %H_%M_%S")
+
+os.makedirs(CHAT_LOG_DIRECTORY, exist_ok=True)
+
 filepath = f"{CHAT_LOG_DIRECTORY}/thought_{now}.md"
+filepath = os.path.abspath(filepath)
+
 with open(filepath, "w") as file:
     file.write("## Prompt\n")
     file.write("".join(prompt))

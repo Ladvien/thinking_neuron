@@ -5,11 +5,11 @@ import yaml
 from fastapi import FastAPI
 import uvicorn
 
-from thinking_neuron.thinking_server import ThinkingNeuronServer
+from thinking_tool.thinking_server import ThinkingToolServer
 
 app = FastAPI()
 
-speech_neuron = ThinkingNeuronServer()
+speech_neuron = ThinkingToolServer()
 app.include_router(speech_neuron.router)
 
 if __name__ == "__main__":

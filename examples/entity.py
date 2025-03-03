@@ -1,7 +1,7 @@
 import requests
 
-from thinking_neuron.entity import Entity, Tool, ToolConfig
-from thinking_neuron.thinking_server import ThinkingNeuronServer
+from thinking_tool.entity import Entity, Tool, ToolConfig
+from thinking_tool.thinking_server import ThinkingToolServer
 
 
 class ThinkingTool(Tool):

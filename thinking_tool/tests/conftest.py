@@ -11,7 +11,7 @@ import time
 import threading
 
 
-from thinking_neuron.thinking_server import ThinkingNeuronServer, ToolConfig
+from thinking_tool.thinking_server import ThinkingToolServer, ToolConfig
 
 
 class Server(uvicorn.Server):
@@ -38,7 +38,7 @@ def server():
 
     app = FastAPI()
 
-    speech_neuron = ThinkingNeuronServer()
+    speech_neuron = ThinkingToolServer()
     app.include_router(speech_neuron.router)
 
     config = uvicorn.Config(app, host=HOST, port=PORT, log_level="info")

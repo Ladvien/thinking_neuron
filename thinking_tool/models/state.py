@@ -2,7 +2,7 @@ import logging
 from typing import Callable
 from pydantic import BaseModel, Field
 
-from thinking_neuron.models.request import ThinkingRequest
+from thinking_tool.models.request import ThinkingRequest
 
 logger = logging.getLogger(__name__ + "." + __file__)
 

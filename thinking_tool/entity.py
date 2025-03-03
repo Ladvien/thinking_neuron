@@ -38,8 +38,9 @@ class Entity:
         thinking_server: Tool,
         tools: list[Tool],
     ):
-        self.tools = tools
         self.directive = directive
+        self.thinking_server = thinking_server
+        self.tools = tools
 
         while True:
             self.think()

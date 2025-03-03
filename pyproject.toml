@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "thinking_neuron"
+name = "thinking_tool"
 version = "0.0.1"
 description = "A short description of your package."
 authors = ["C. Thomas Brittain <cthomasbrittain@hotmail.com>"]
@@ -7,9 +7,9 @@ license = "MIT"
 readme = "README.md"
 
 [tool.poetry.urls]
-homepage = "https://github.com/Ladvien/thinking_neuron"
-repository = "https://github.com/Ladvien/thinking_neuron"
-documentation = "https://thinking_neuron.readthedocs.io/en/latest/"
+homepage = "https://github.com/Ladvien/thinking_tool"
+repository = "https://github.com/Ladvien/thinking_tool"
+documentation = "https://thinking_tool.readthedocs.io/en/latest/"
 
 
 [tool.poetry.dependencies]
@@ -40,7 +40,7 @@ minversion = "6.0"
 addopts = "-ra -q -vvv -W ignore::DeprecationWarning"
 
 
-testpaths = ["thinking_neuron/tests"]
+testpaths = ["thinking_tool/tests"]
 
 
 
@@ -53,5 +53,5 @@ docs         = "sphinx-build docs/source docs/build/html" # a simple command tas
 docs_view    = "sphinx-autobuild docs/source docs/build/html" # a simple command task
 patch        = "poetry version patch" # a simple command task
 _publish     = "poetry publish --build" # a simple command task
-test         = "pytest thinking_neuron/tests/*"
+test         = "pytest thinking_tool/tests/*"
 release = ["docs", "patch", "_publish"] # a task that depends on other tasks

@@ -26,7 +26,7 @@ class SelfAwareness:
     log_filepath: str | None = None
 
     def __init__(
-        self, code_directory: str = "thinking_neuron", log_directory: str = ".."
+        self, code_directory: str = "thinking_tool", log_directory: str = ".."
     ) -> None:
         super().__init__()
         self.code_directory = code_directory

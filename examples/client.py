@@ -1,10 +1,10 @@
 import requests
 from rich import print
 import json
-from thinking_neuron.models.request import ThinkingServerConfig
-from thinking_neuron.thinking_server import ServerConfigRequest
-from thinking_neuron.models import ModelSettings
-from thinking_neuron.tests import PULL_MODEL_URL
+from thinking_tool.models.request import ThinkingServerConfig
+from thinking_tool.thinking_server import ServerConfigRequest
+from thinking_tool.models import ModelSettings
+from thinking_tool.tests import PULL_MODEL_URL
 
 # HOST = "http://192.168.1.140:8000"
 HOST = "http://0.0.0.0:8000"

@@ -1,4 +1,4 @@
-name: thinking_neuron
+name: thinking_tool
 
 # LangChain Ollama settings
 model_settings:

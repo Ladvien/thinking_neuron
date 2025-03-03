@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from .thinking_server import ThinkingNeuronServer
+from .thinking_server import ThinkingToolServer
 
 import os
 import logging

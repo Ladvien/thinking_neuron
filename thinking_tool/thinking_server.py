@@ -9,7 +9,7 @@ import logging
 from rich import print
 import requests
 
-from thinking_neuron.entity import Tool, ToolConfig
+from thinking_tool.entity import Tool, ToolConfig
 
 from .self_awareness import SelfAwareness
 from .llm_manager import LLM_Manager
@@ -19,7 +19,7 @@ from .models import ServerConfigRequest, ThinkingRequest, PullModelRequest, Stre
 logger = logging.getLogger(__name__ + "." + __file__)
 
 
-class ThinkingNeuronServer:
+class ThinkingToolServer:
 
     def __init__(self) -> None:
 
@@ -78,7 +78,7 @@ class ThinkingNeuronServer:
             response_class=JSONResponse,
         )
 
-        logger.info("ThinkingNeuronServer initialized")
+        logger.info("ThinkingToolServer initialized")
 
     async def list_models(self) -> JSONResponse:
         models = self.llm_mang.local_models_available().models
