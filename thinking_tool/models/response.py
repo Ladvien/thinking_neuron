@@ -3,6 +3,8 @@ from dataclasses import dataclass, asdict
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
+from thinking_tool.models.request import ThinkingServerConfig
+
 
 logger = logging.getLogger(__name__ + "." + __file__)
 
@@ -13,7 +15,7 @@ class ModelLoadingResponse(BaseModel):
 
 
 class UpdateConfigResponse(BaseModel):
-    stream_id: str | None
+    config: ThinkingServerConfig
 
 
 class ThinkingResponse(BaseModel):
@@ -24,8 +26,8 @@ class ThinkingResponse(BaseModel):
     # stream_url: str
 
 
-class OllamaPullModelStreamResponse(BaseModel):
-    stream_id: str | None
+class StreamResponse(BaseModel):
+    stream_url: str | None
 
 
 class OllamaErroResponse(JSONResponse):

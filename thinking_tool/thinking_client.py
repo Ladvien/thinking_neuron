@@ -1,14 +1,24 @@
+import json
+import logging
+import ollama
 import requests
 
 # from dataclasses import dataclass
-from typing import Optional, List, Dict
+from typing import Generator, Optional, List, Dict
 
 from thinking_tool.models.request import (
     PullModelRequest,
     ServerConfigRequest,
     ThinkingRequest,
+    ThinkingServerConfig,
 )
-from thinking_tool.models.response import ThinkingResponse, UpdateConfigResponse
+from thinking_tool.models.response import (
+    StreamResponse,
+    ThinkingResponse,
+    UpdateConfigResponse,
+)
+
+logger = logging.getLogger(__name__ + "." + __file__)
 
 
 class ThinkingToolClient:
@@ -26,6 +36,14 @@ class ThinkingToolClient:
         response = requests.post(url, json=json_data)
         response.raise_for_status()
         return response.json()
+
+    def _stream_response(
+        self, endpoint: str, params: Optional[Dict] = None
+    ) -> Generator[str, None, None]:
+        response = requests.get(endpoint, stream=True)
+        for chunk in response.iter_content(chunk_size=1024):
+            if chunk:
+                yield json.loads(chunk.decode())
 
     # Implement /list_models endpoint
     def list_models(self) -> List[str]:
@@ -48,7 +66,9 @@ class ThinkingToolClient:
         return self._post("/pull_model", {"model": request.model})
 
     # Implement /think endpoint
-    def think(self, request: ThinkingRequest) -> ThinkingResponse:
+    def think(
+        self, request: ThinkingRequest
+    ) -> Generator[ollama.ChatResponse, None, None]:
         """
         Initiates a thinking process with given messages.
         Args:
@@ -56,19 +76,23 @@ class ThinkingToolClient:
         Returns:
             Response containing the generated response.
         """
-        return self._post("/think", {"messages": request.messages})
+        stream = StreamResponse(**self._post("/think", {"messages": request.messages}))
+        for chunk in self._stream_response(f"{self.base_url}{stream.stream_url}"):
+            yield ollama.ChatResponse(**chunk)
 
     # Implement /update_settings endpoint
     def update_settings(self, request: ServerConfigRequest) -> UpdateConfigResponse:
         """
         Updates server settings with specified configuration.
         Args:
-            request: ServerConfigRequest containing the new configuration.
+            request: ServerConfigRequest containing the updated configuration.
         Returns:
-            Response containing the stream_id.
+            Response containing the updated configuration.
         """
-        response_json = self._post("/update_settings", request.config)
-        return UpdateConfigResponse(**response_json)
+        response = self._post("/update_settings", request.model_dump())
+        logger.info(response)
+        config = ThinkingServerConfig(**response)
+        return UpdateConfigResponse(config=config)
 
     # Implement /stream_response endpoint
     def stream_response(self, stream_id: str) -> Dict:

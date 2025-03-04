@@ -103,10 +103,12 @@ class ThinkingToolServer:
 
         return JSONResponse({"stream_url": f"/stream_response?stream_id={stream_id}"})
 
-    async def update_settings(
-        self, request: ServerConfigRequest
-    ) -> UpdateConfigResponse:
-        return JSONResponse(self.llm_mang.update(request).model_dump_json())
+    async def update_settings(self, request: ServerConfigRequest) -> JSONResponse:
+        response = self.llm_mang.update(request.config)
+        if response.message == "Model updated":
+            return JSONResponse(request.config.model_dump())
+
+        return JSONResponse(status_code=404, content=response.model_dump())
 
     async def think(self, request: ThinkingRequest) -> StreamingResponse:
         stream_id = str(uuid4())

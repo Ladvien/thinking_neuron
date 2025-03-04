@@ -130,7 +130,7 @@ class LLM_Manager:
         return await ollama.AsyncClient().pull(model, stream=True)
 
     def update(self, request: ServerConfigRequest) -> LLM_ManagerResponse:
-        self.config = request.config
+        self.config = request
         logger.info("Config updated")
         return LLM_ManagerResponse(message="Model updated")
 

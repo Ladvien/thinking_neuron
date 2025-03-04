@@ -1,3 +1,4 @@
+import ollama
 import requests
 from rich import print
 import json
@@ -7,6 +8,7 @@ import uvicorn
 import os
 
 from thinking_tool.models.request import ThinkingServerConfig
+from thinking_tool.models.response import StreamResponse
 from thinking_tool.thinking_server import (
     ServerConfigRequest,
     ThinkingToolServer,
@@ -84,30 +86,27 @@ def client():
 
 def test_think(server, downloaded_model, client: ThinkingToolClient):
     response = client.think(ThinkingRequest(messages=["What's up dude?"]))
-    data = response.json()
-    print(data)
-    stream_url = data["stream_url"]
-    stream_url = f"{HOST}{stream_url}"
-
-    response = requests.get(stream_url, stream=True)
-    for chunk in response.iter_content(chunk_size=1024):
-        if chunk:
-            print(chunk.decode(), end="", flush=True)
-            assert isinstance(chunk.decode(), str)
-
-    assert response.status_code == 200
+    for chat_response in response:
+        print(chat_response, end="", flush=True)
+        assert isinstance(chat_response, ollama.ChatResponse)
 
 
-def test_update_settings(server, downloaded_model):
+def test_update_settings(server, downloaded_model, client: ThinkingToolClient):
     model_settings = ModelSettings(model=downloaded_model)
     server_config = ThinkingServerConfig(
-        name="bob",
+        name="test bob",
         model_settings=model_settings,
     )
-    data = ServerConfigRequest(config=server_config).model_dump()
-    result = requests.post(UPDATE_SETTINGS_URL, json=data)
+    updated_config = client.update_settings(
+        ServerConfigRequest(
+            config=server_config,
+        ),
+    )
 
-    assert result.status_code == 200
+    logger.info(updated_config)
+
+    assert updated_config.config.name == "test bob"
+    assert updated_config.config.model_settings.model == downloaded_model
 
 
 def test_list_models(server):
