@@ -9,8 +9,8 @@ from thinking_tool.thinking_server import ThinkingToolServer
 
 app = FastAPI()
 
-speech_neuron = ThinkingToolServer()
-app.include_router(speech_neuron.router)
+thinking_tool = ThinkingToolServer()
+app.include_router(thinking_tool.router)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

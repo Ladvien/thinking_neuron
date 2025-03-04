@@ -33,7 +33,7 @@ class SelfAwareness:
         self.log_filepath = Path(__file__).parent / log_directory / self.log_filename
 
     def _load_code(self):
-        pattern = "../" + self.code_directory + "/*.py"
+        pattern = f"{self.code_directory}/**/*.py"
         logger.info(f"Looking for code files in '{pattern}'")
         file_paths = glob(pattern, recursive=True)
         logger.info("Found code files:")

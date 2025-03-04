@@ -21,8 +21,12 @@ logger = logging.getLogger(__name__ + "." + __file__)
 
 class ThinkingToolServer:
 
-    def __init__(self) -> None:
-
+    def __init__(
+        self,
+        # Relative path to the code directory.
+        code_dir: str = "../thinking_tool",
+    ) -> None:
+        self.code_dir = code_dir
         self.last_response_stream = None
 
         self.llm_mang = LLM_Manager()

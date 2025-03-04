@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from .thinking_server import ThinkingToolServer
+from .self_awareness import SelfAwareness, CodeFile, LogFile
 
 import os
 import logging

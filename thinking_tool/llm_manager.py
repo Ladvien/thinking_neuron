@@ -129,8 +129,8 @@ class LLM_Manager:
     ) -> Generator[ollama.ListResponse, None, None]:
         return await ollama.AsyncClient().pull(model, stream=True)
 
-    def update(self, request: ServerConfigRequest) -> LLM_ManagerResponse:
-        self.config = request
+    def update(self, config: ThinkingServerConfig) -> LLM_ManagerResponse:
+        self.config = config
         logger.info("Config updated")
         return LLM_ManagerResponse(message="Model updated")
 

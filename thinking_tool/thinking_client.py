@@ -17,6 +17,7 @@ from thinking_tool.models.response import (
     ThinkingResponse,
     UpdateConfigResponse,
 )
+from thinking_tool.self_awareness import CodeFile, LogFile
 
 logger = logging.getLogger(__name__ + "." + __file__)
 
@@ -52,10 +53,13 @@ class ThinkingToolClient:
         Returns:
             List of model names/ids.
         """
-        return self._get("/list_models")
+        models = self._get("/list_models")
+        return models
 
     # Implement /pull_model endpoint
-    def pull_model(self, request: PullModelRequest) -> Dict:
+    def pull_model(
+        self, request: PullModelRequest
+    ) -> Generator[ollama.ProgressResponse, None, None]:
         """
         Pulls a specified model.
         Args:
@@ -63,7 +67,9 @@ class ThinkingToolClient:
         Returns:
             Response containing status and message.
         """
-        return self._post("/pull_model", {"model": request.model})
+        stream = StreamResponse(**self._post("/pull_model", {"model": request.model}))
+        for chunk in self._stream_response(f"{self.base_url}{stream.stream_url}"):
+            yield ollama.ProgressResponse(**chunk)
 
     # Implement /think endpoint
     def think(
@@ -115,7 +121,7 @@ class ThinkingToolClient:
         return self._get("/logs")
 
     # Implement /code endpoint
-    def get_code(self, filename: Optional[str] = None) -> Dict:
+    def get_code(self, filename: Optional[str] = None) -> List[CodeFile]:
         """
         Retrieves source code from the server.
         Args:
@@ -124,4 +130,14 @@ class ThinkingToolClient:
             Dictionary containing the requested code or list of files if no filename is provided.
         """
         params = {"filename": filename} if filename else None
-        return self._get("/code", params)
+        result = self._get("/code", params)
+        files = [CodeFile(**file) for file in result]
+        return files
+
+    def get_docs(self) -> List[CodeFile]:
+        """
+        Retrieves API documentation from the server.
+        Returns:
+            Dictionary containing the requested code or list of files if no filename is provided.
+        """
+        return self._get("/openapi.json")
