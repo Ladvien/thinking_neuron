@@ -14,10 +14,9 @@ from thinking_tool.models.request import (
 )
 from thinking_tool.models.response import (
     StreamResponse,
-    ThinkingResponse,
     UpdateConfigResponse,
 )
-from thinking_tool.self_awareness import CodeFile, LogFile
+from thinking_tool.self_awareness import CodeFile
 
 logger = logging.getLogger(__name__ + "." + __file__)
 

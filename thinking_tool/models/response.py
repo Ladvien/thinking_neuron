@@ -1,7 +1,6 @@
 import logging
-from dataclasses import dataclass, asdict
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from thinking_tool.models.request import ThinkingServerConfig
 

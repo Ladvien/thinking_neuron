@@ -1,20 +1,13 @@
 import ollama
-import requests
 from rich import print
-import json
-import pytest
 import logging
-import uvicorn
 import os
 
 from thinking_tool.models.request import PullModelRequest, ThinkingServerConfig
-from thinking_tool.models.response import StreamResponse
 from thinking_tool.self_awareness import CodeFile
 from thinking_tool.tests.conftest import MODEL_FOR_PULL_TEST
 from thinking_tool.thinking_server import (
     ServerConfigRequest,
-    ThinkingToolServer,
-    ToolConfig,
 )
 from thinking_tool.models import ThinkingRequest
 from thinking_tool.thinking_client import ThinkingToolClient

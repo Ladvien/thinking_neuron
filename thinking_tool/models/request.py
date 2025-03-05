@@ -1,6 +1,5 @@
 import logging
-from dataclasses import dataclass, asdict
-from fastapi.responses import JSONResponse
+from typing import Callable
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__ + "." + __file__)
@@ -29,3 +28,10 @@ class PullModelRequest(BaseModel):
 
 class StreamResultRequest(BaseModel):
     stream_id: str | None
+
+
+class StreamRequest(BaseModel):
+    stream_id: str
+    request: dict
+    method: Callable = None
+    media_type: str = "text/plain"

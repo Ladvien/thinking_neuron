@@ -1,9 +1,7 @@
 from pathlib import Path
-from pydantic import BaseModel, Field
-import os
+from pydantic import BaseModel
 from glob import glob
 import logging
-from rich import print
 
 logger = logging.getLogger(__name__ + "." + __file__)
 

@@ -1,20 +1,16 @@
-from abc import ABC, abstractmethod
 import json
-from dataclasses import dataclass
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse, StreamingResponse
-from typing import AsyncGenerator, Protocol
+from typing import AsyncGenerator
 from uuid import uuid4
 import logging
 from rich import print
-import requests
 
-from thinking_tool.entity import Tool, ToolConfig
+from thinking_tool.models.request import StreamRequest
 
 from .self_awareness import SelfAwareness
 from .llm_manager import LLM_Manager
-from .models import UpdateConfigResponse
-from .models import ServerConfigRequest, ThinkingRequest, PullModelRequest, Stream
+from .models import ServerConfigRequest, ThinkingRequest, PullModelRequest
 
 logger = logging.getLogger(__name__ + "." + __file__)
 
@@ -98,7 +94,7 @@ class ThinkingToolServer:
         _ = self.llm_mang.pull(request.model)
 
         # # Setup stream callback.
-        self.last_response_stream = Stream(
+        self.last_response_stream = StreamRequest(
             text=f"Attempting to download model: '{request.model}'",
             stream_id=stream_id,
             request={"request": request},
@@ -116,7 +112,7 @@ class ThinkingToolServer:
 
     async def think(self, request: ThinkingRequest) -> StreamingResponse:
         stream_id = str(uuid4())
-        self.last_response_stream = Stream(
+        self.last_response_stream = StreamRequest(
             stream_id=stream_id,
             request={"request": request},
             method=self._think_stream,
