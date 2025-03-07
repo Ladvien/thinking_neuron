@@ -3,6 +3,7 @@ from rich import print
 import logging
 import os
 
+from thinking_tool.models.config import OllamaSettings
 from thinking_tool.models.request import PullModelRequest, ThinkingServerConfig
 from thinking_tool.self_awareness import CodeFile
 from thinking_tool.tests.conftest import MODEL_FOR_PULL_TEST
@@ -11,8 +12,6 @@ from thinking_tool.thinking_server import (
 )
 from thinking_tool.models import ThinkingRequest
 from thinking_tool.thinking_client import ThinkingToolClient
-
-from thinking_tool.models import OllamaSettings
 
 logger = logging.getLogger(__name__ + "." + __file__)
 

@@ -12,6 +12,8 @@ from thinking_tool.llm_manager import LLM_Manager, LLM_ManagerResponse
 from thinking_tool.models import ThinkingServerConfig, ServerConfigRequest
 from thinking_tool.models.request import OllamaSettings
 
+logger = logging.getLogger(__name__ + "." + __file__)
+
 SERVER_LOG_LEVEL = "info"
 
 MODEL_FOR_PULL_TEST = "reader-lm"
@@ -31,6 +33,8 @@ def config():
         name="bob",
         model_settings=model_settings,
     )
+
+    return server_config
 
 
 def test_init_llm_manager(config):
