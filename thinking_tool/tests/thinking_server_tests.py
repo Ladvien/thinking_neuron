@@ -12,7 +12,7 @@ from thinking_tool.thinking_server import (
 from thinking_tool.models import ThinkingRequest
 from thinking_tool.thinking_client import ThinkingToolClient
 
-from thinking_tool.models import ModelSettings
+from thinking_tool.models import OllamaSettings
 
 logger = logging.getLogger(__name__ + "." + __file__)
 
@@ -25,7 +25,7 @@ def test_think(server, downloaded_model, client: ThinkingToolClient):
 
 
 def test_update_settings(server, downloaded_model, client: ThinkingToolClient):
-    model_settings = ModelSettings(model=downloaded_model)
+    model_settings = OllamaSettings(model=downloaded_model)
     server_config = ThinkingServerConfig(
         name="test bob",
         model_settings=model_settings,

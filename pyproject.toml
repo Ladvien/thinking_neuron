@@ -33,16 +33,14 @@ sphinx-autodoc2 = "^0.5.0"
 doc-utils = "^0.0.2"
 poethepoet = "^0.32.2"
 
-
 [tool.pytest.ini_options]
 pythonpath = "."
 minversion = "6.0"
 addopts = "-ra -q -vvv -W ignore::DeprecationWarning"
 
+# log_cli = "true"
 
 testpaths = ["thinking_tool/tests"]
-
-
 
 [build-system]
 requires = ["poetry-core"]
@@ -54,4 +52,5 @@ docs_view    = "sphinx-autobuild docs/source docs/build/html" # a simple command
 patch        = "poetry version patch" # a simple command task
 _publish     = "poetry publish --build" # a simple command task
 test         = "pytest thinking_tool/tests/*"
+test_llm_manager = "pytest thinking_tool/tests/llm_manager_tests.py"
 release = ["docs", "patch", "_publish"] # a task that depends on other tasks

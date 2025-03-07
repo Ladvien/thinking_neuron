@@ -6,7 +6,7 @@ from uuid import uuid4
 import logging
 from rich import print
 
-from thinking_tool.models.request import StreamRequest
+from thinking_tool.models.request import StreamRequest, ThinkingServerConfig
 
 from .self_awareness import SelfAwareness
 from .llm_manager import LLM_Manager
@@ -19,13 +19,16 @@ class ThinkingToolServer:
 
     def __init__(
         self,
+        config: ThinkingServerConfig = None,
         # Relative path to the code directory.
         code_dir: str = "../thinking_tool",
     ) -> None:
+        self.config = config if config else ThinkingServerConfig()
+
         self.code_dir = code_dir
         self.last_response_stream = None
 
-        self.llm_mang = LLM_Manager()
+        self.llm_mang = LLM_Manager(config=self.config)
         self.self_awareness = SelfAwareness()
         self.router = APIRouter()
 

@@ -2,16 +2,15 @@ import logging
 from typing import Callable
 from pydantic import BaseModel, Field
 
+from thinking_tool.models.config import OllamaSettings
+
+
 logger = logging.getLogger(__name__ + "." + __file__)
-
-
-class ModelSettings(BaseModel):
-    model: str = Field(default="deepseek-r1:8b")
 
 
 class ThinkingServerConfig(BaseModel):
     name: str = Field(default="deep_thought")
-    model_settings: ModelSettings = ModelSettings()
+    model_settings: OllamaSettings = OllamaSettings()
 
 
 class ServerConfigRequest(BaseModel):

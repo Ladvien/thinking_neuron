@@ -7,6 +7,7 @@ import time
 import threading
 import logging
 
+from thinking_tool.models.config import OllamaSettings
 from thinking_tool.models.request import PullModelRequest, ThinkingServerConfig
 from thinking_tool.models.response import UpdateConfigResponse
 from thinking_tool.thinking_server import (
@@ -14,7 +15,6 @@ from thinking_tool.thinking_server import (
     ThinkingToolServer,
 )
 from thinking_tool.thinking_client import ThinkingToolClient
-from thinking_tool.models import ModelSettings
 
 
 logger = logging.getLogger(__name__ + "." + __file__)
@@ -23,6 +23,8 @@ SERVER_LOG_LEVEL = "info"
 
 MODEL_FOR_PULL_TEST = "reader-lm"
 SMALL_MODEL_NAME = "qwen2.5:0.5b"
+OLLAMA_HOST = "http://192.168.1.177"
+OLLAMA_PORT = 11434
 
 
 class Server(uvicorn.Server):
@@ -49,7 +51,16 @@ def server():
 
     app = FastAPI()
 
-    thinking_tool = ThinkingToolServer()
+    model_settings = OllamaSettings(
+        model=MODEL_FOR_PULL_TEST,
+        host=OLLAMA_HOST,
+        port=OLLAMA_PORT,
+    )
+    config = ThinkingServerConfig(
+        name="bob",
+        model_settings=model_settings,
+    )
+    thinking_tool = ThinkingToolServer(config=config)
     app.include_router(thinking_tool.router)
 
     config = uvicorn.Config(
@@ -74,7 +85,11 @@ def downloaded_model(server, client: ThinkingToolClient):
     logger.info("Model downloaded")
 
     # Update the model settings
-    model_settings = ModelSettings(model=SMALL_MODEL_NAME)
+    model_settings = OllamaSettings(
+        model=MODEL_FOR_PULL_TEST,
+        host=OLLAMA_HOST,
+        port=OLLAMA_PORT,
+    )
     server_config = ThinkingServerConfig(
         name="bob",
         model_settings=model_settings,
