@@ -3,7 +3,7 @@ from rich import print
 import logging
 import os
 
-from thinking_tool.models.config import OllamaSettings
+from thinking_tool.models.config import OllamaConfig
 from thinking_tool.models.request import PullModelRequest, ThinkingServerConfig
 from thinking_tool.self_awareness import CodeFile
 from thinking_tool.tests.conftest import MODEL_FOR_PULL_TEST
@@ -24,7 +24,7 @@ def test_think(server, downloaded_model, client: ThinkingToolClient):
 
 
 def test_update_settings(server, downloaded_model, client: ThinkingToolClient):
-    model_settings = OllamaSettings(model=downloaded_model)
+    model_settings = OllamaConfig(model=downloaded_model)
     server_config = ThinkingServerConfig(
         name="test bob",
         model_settings=model_settings,

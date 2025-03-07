@@ -1,11 +1,7 @@
 from pydantic import BaseModel, Field
 
+from thinking_tool.models.base import LLM_ManagerConfig
 
-class OllamaSettings(BaseModel):
-    model: str = Field(default="deepseek-r1:8b")
-    host: str = Field(default="localhost")
-    port: int = Field(default=11434)
-    timeout: int = Field(default=10)
 
-    def host_uri(self) -> str:
-        return f"{self.host}:{self.port}"
+class OllamaConfig(LLM_ManagerConfig):
+    pass

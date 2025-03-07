@@ -7,7 +7,7 @@ import time
 import threading
 import logging
 
-from thinking_tool.models.config import OllamaSettings
+from thinking_tool.models.config import OllamaConfig
 from thinking_tool.models.request import PullModelRequest, ThinkingServerConfig
 from thinking_tool.models.response import UpdateConfigResponse
 from thinking_tool.thinking_server import (
@@ -51,7 +51,7 @@ def server():
 
     app = FastAPI()
 
-    model_settings = OllamaSettings(
+    model_settings = OllamaConfig(
         model=MODEL_FOR_PULL_TEST,
         host=OLLAMA_HOST,
         port=OLLAMA_PORT,
@@ -85,7 +85,7 @@ def downloaded_model(server, client: ThinkingToolClient):
     logger.info("Model downloaded")
 
     # Update the model settings
-    model_settings = OllamaSettings(
+    model_settings = OllamaConfig(
         model=MODEL_FOR_PULL_TEST,
         host=OLLAMA_HOST,
         port=OLLAMA_PORT,

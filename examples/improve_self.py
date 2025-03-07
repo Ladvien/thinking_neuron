@@ -3,7 +3,7 @@ from rich import print
 import json
 
 from thinking_tool.models.request import (
-    OllamaSettings,
+    OllamaConfig,
     PullModelRequest,
     ServerConfigRequest,
     ThinkingServerConfig,
@@ -28,7 +28,7 @@ for chunk in response:
 """
 Update settings
 """
-model_settings = OllamaSettings(model=MODEL_NAME)
+model_settings = OllamaConfig(model=MODEL_NAME)
 server_config = ThinkingServerConfig(
     name="bob",
     model_settings=model_settings,

@@ -2,7 +2,7 @@ import logging
 from typing import Callable
 from pydantic import BaseModel, Field
 
-from thinking_tool.models.config import OllamaSettings
+from thinking_tool.models.config import OllamaConfig
 
 
 logger = logging.getLogger(__name__ + "." + __file__)
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__ + "." + __file__)
 
 class ThinkingServerConfig(BaseModel):
     name: str = Field(default="deep_thought")
-    model_settings: OllamaSettings = OllamaSettings()
+    model_settings: OllamaConfig = OllamaConfig()
 
 
 class ServerConfigRequest(BaseModel):
