@@ -1,19 +1,13 @@
 import pytest
 from rich import print
-from fastapi import FastAPI
-import uvicorn
-import contextlib
-import time
-import threading
 import logging
 import ollama
 
 from thinking_tool.llm_manager import (
-    LLM_Manager,
-    LLM_ManagerResponse,
+    OllamaLLM_Manager,
     LLM_ManagerStatus,
+    Message,
 )
-from thinking_tool.models import ThinkingServerConfig, ServerConfigRequest
 from thinking_tool.models.request import OllamaConfig
 
 logger = logging.getLogger(__name__ + "." + __file__)
@@ -34,6 +28,11 @@ def config():
         host=OLLAMA_HOST,
         port=OLLAMA_PORT,
     )
+
+
+@pytest.fixture
+def ollama_client():
+    return ollama.Client(f"{OLLAMA_HOST}:{OLLAMA_PORT}")
 
 
 @pytest.fixture
@@ -63,17 +62,12 @@ LLM_Manager Design notes:
 """
 
 
-@pytest.fixture
-def ollama_client():
-    return ollama.Client(f"{OLLAMA_HOST}:{OLLAMA_PORT}")
-
-
 @pytest.mark.asyncio
-async def test_init_llm_manager(config):
-    manager = LLM_Manager(config=config)
+async def test_init_llm_manager(config: OllamaConfig):
+    manager = OllamaLLM_Manager(config=config)
     assert manager.config == config
-    assert manager.client._client.base_url == f"{OLLAMA_HOST}:{OLLAMA_PORT}"
-    assert manager.model is None
+    assert manager._client._client.base_url == f"{OLLAMA_HOST}:{OLLAMA_PORT}"
+    assert manager.config.model is config.model
 
 
 @pytest.mark.asyncio
@@ -87,7 +81,7 @@ async def test_llm_manager_status_returns_model_not_loaded_when_model_has_not_be
     except ollama._types.ResponseError as e:
         print("Didn't need to delete model")
 
-    manager = LLM_Manager(config=config)
+    manager = OllamaLLM_Manager(config=config)
     await manager.status() == LLM_ManagerStatus.model_not_loaded
 
 
@@ -98,7 +92,7 @@ async def test_llm_manager_status_returns_ready_when_model_has_been_pulled(
     pulled_model,
 ):
     config.model = pulled_model
-    manager = LLM_Manager(config=config)
+    manager = OllamaLLM_Manager(config=config)
     await manager.status() == LLM_ManagerStatus.ready
 
 
@@ -109,7 +103,7 @@ async def test_llm_manager_load_returns_in_progress_status(
     pulled_model,
 ):
     config.model = pulled_model
-    manager = LLM_Manager(config=config)
+    manager = OllamaLLM_Manager(config=config)
     await manager.status() == LLM_ManagerStatus.model_loading
 
 
@@ -120,8 +114,38 @@ async def test_llm_manager_load_pulls_ollama_model(
     pulled_model,
 ):
     config.model = pulled_model
-    manager = LLM_Manager(config=config)
+    manager = OllamaLLM_Manager(config=config)
     result = await manager.load(config.model)
     assert result.status == LLM_ManagerStatus.ready
     assert result.details["modelinfo"]["general.architecture"] == "qwen2"
     assert manager.config.model == config.model
+
+
+@pytest.mark.asyncio
+async def test_llm_manager_chat_returns_generating_status(
+    config,
+    ollama_client,
+    pulled_model,
+):
+    config.model = pulled_model
+    manager = OllamaLLM_Manager(config=config)
+    message = Message(role="user", text="Hello")
+    result = await manager.chat([message])
+    assert result.status == LLM_ManagerStatus.generating
+
+
+@pytest.mark.asyncio
+async def test_llm_manager_chat_returns_async_generator(
+    config,
+    ollama_client,
+    pulled_model,
+):
+    config.model = pulled_model
+    manager = OllamaLLM_Manager(config=config)
+    message = Message(role="user", text="Hello")
+    result = await manager.chat([message])
+
+    async for response in result.stream:
+        assert False, response
+        assert response.role == "bot"
+        assert response.text != ""

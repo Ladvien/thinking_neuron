@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 import logging
-from typing import Protocol
 from dataclasses import dataclass
 from time import sleep
 from rich import print

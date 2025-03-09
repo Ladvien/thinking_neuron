@@ -9,7 +9,7 @@ from rich import print
 from thinking_tool.models.request import StreamRequest, ThinkingServerConfig
 
 from .self_awareness import SelfAwareness
-from .llm_manager import LLM_Manager
+from .llm_manager import OllamaLLM_Manager
 from .models import ServerConfigRequest, ThinkingRequest, PullModelRequest
 
 logger = logging.getLogger(__name__ + "." + __file__)
@@ -28,7 +28,7 @@ class ThinkingToolServer:
         self.code_dir = code_dir
         self.last_response_stream = None
 
-        self.llm_mang = LLM_Manager(config=self.config)
+        self.llm_mang = OllamaLLM_Manager(config=self.config)
         self.self_awareness = SelfAwareness()
         self.router = APIRouter()
 

@@ -5,3 +5,4 @@ from .request import (
     PullModelRequest,
 )
 from .response import ThinkingResponse, UpdateConfigResponse
+from .config import OllamaConfig
